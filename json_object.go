@@ -1,16 +1,9 @@
 package fastjson
 
 import (
-	log "github.com/sirupsen/logrus"
+	"fmt"
+	"strconv"
 )
-
-var json = ConfigWithCustomTimeFormat
-
-type JSON interface {
-	ToJSON() []byte
-	ToJSONString()
-	Parse(s string) JSONObject
-}
 
 type JSONObject map[string]interface{}
 
@@ -30,49 +23,56 @@ func (jsonObject *JSONObject) GetString(k string) (string, bool) {
 		return v.(string), true
 	}
 }
+func (jsonObject *JSONObject) getInt(k string, bitSize int) (int64, bool) {
+	v := jsonObject.Get(k)
+	if v == nil {
+		return 0, false
+	} else {
+		switch v.(type) {
+		case int32:
+			return int64(v.(int32)), true
+		case int:
+			return int64(v.(int)), true
+		case string:
+			ret, err := strconv.ParseInt(v.(string), 10, bitSize)
+			if err == nil {
+				return ret, true
+			} else {
+				return 0, true
+			}
+		default:
+			ret, err := strconv.ParseInt(fmt.Sprint(v), 10, bitSize)
+			if err == nil {
+				return ret, true
+			} else {
+				return 0, true
+			}
+		}
+	}
+}
+
+func (jsonObject *JSONObject) GetInt64(k string) (int64, bool) {
+	v, ok := jsonObject.getInt(k, 64)
+	return int64(v), ok
+}
+func (jsonObject *JSONObject) GetInt32(k string) (int32, bool) {
+	v, ok := jsonObject.getInt(k, 32)
+	return int32(v), ok
+}
+func (jsonObject *JSONObject) GetInt(k string) (int, bool) {
+	v, ok := jsonObject.getInt(k, 0)
+	return int(v), ok
+}
 
 func (jsonObject *JSONObject) PutFluent(k string, v interface{}) *JSONObject {
 	(*jsonObject)[k] = v
 	return jsonObject
 }
 
-func ParseString(s string) JSONObject {
-	var o JSONObject
-	if err := json.Unmarshal([]byte(s), &o); err != nil {
-		log.Warning(err)
-		return nil
-	} else {
-		return o
-	}
-}
-
-func Parse(bytes []byte) JSONObject {
-	var o JSONObject
-	if err := json.Unmarshal(bytes, &o); err != nil {
-		log.Warning(err)
-		return nil
-	} else {
-		return o
-	}
-}
 func (jsonObject *JSONObject) ToJSONString() string {
-	return string(jsonObject.ToJSON())
+	return ToJSONString(jsonObject)
 }
 
 func (jsonObject *JSONObject) ToJSON() []byte {
-	if bytes, err := json.Marshal(jsonObject); err != nil {
-		log.Warning(err)
-		return nil
-	} else {
-		return bytes
-	}
-}
-
-func ToJSON(v interface{}) []byte {
-	if bytes, err := json.Marshal(v); err != nil {
-		log.Warning(err)
-		return nil
-	} else {
-		return bytes
-	}
+	return ToJSON(jsonObject)
 }

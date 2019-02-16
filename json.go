@@ -1,165 +1,68 @@
 package fastjson
 
 import (
-	"github.com/json-iterator/go"
-	"strconv"
-	"time"
-	"unsafe"
+	log "github.com/sirupsen/logrus"
 )
 
-var ConfigWithCustomTimeFormat = jsoniter.ConfigCompatibleWithStandardLibrary
+var json = FastJson
 
 func init() {
-	ConfigWithCustomTimeFormat.RegisterExtension(&CustomTimeExtension{})
+	// acquiescently, we registered custom time extension
+	// and you can register some new extensions (for our implemented extensions, just call `RegisterExt`,
+	// or else you implement your extension and register it to `FastJson` which is exposed）
+	RegisterExt(CUSTOM_TIME_EXT)
 }
 
-type CustomTimeExtension struct {
-	jsoniter.DummyExtension
+type JSON interface {
+	ToJSON() []byte
+	ToJSONString() string
 }
 
-func (extension *CustomTimeExtension) UpdateStructDescriptor(structDescriptor *jsoniter.StructDescriptor) {
-
-	for _, binding := range structDescriptor.Fields {
-		var typeErr error
-		var isPtr bool
-		typeName := binding.Field.Type().String()
-
-		if typeName == "time.Time" {
-			isPtr = false
-		} else if typeName == "*time.Time" {
-			isPtr = true
-		} else {
-			continue
-		}
-
-		formatTag := binding.Field.Tag().Get("time_format")
-		timeFormat := formatTag
-		if timeFormat == "sql_datetime" {
-			timeFormat = "2006-01-02 15:04:05"
-		} else if timeFormat == "sql_date" {
-			timeFormat = "2006-01-02"
-		}
-
-		locale := time.Local
-		if isUTC, _ := strconv.ParseBool(binding.Field.Tag().Get("time_utc")); isUTC {
-			locale = time.UTC
-		}
-		if locTag := binding.Field.Tag().Get("time_location"); locTag != "" {
-			loc, err := time.LoadLocation(locTag)
-			if err != nil {
-				typeErr = err
-			} else {
-				locale = loc
-			}
-		}
-
-		var isSnap bool
-		snapTag := binding.Field.Tag().Get("time_snap")
-		if snapTag == "" && (formatTag == "sql_datetime" || formatTag == "sql_date") {
-			isSnap = true
-		} else {
-			isSnap, _ = strconv.ParseBool(binding.Field.Tag().Get("time_snap"))
-		}
-
-		binding.Encoder = &funcEncoder{fun: func(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-			if typeErr != nil {
-				stream.Error = typeErr
-				return
-			}
-
-			var format string
-			if timeFormat == "" {
-				format = time.RFC3339Nano
-			} else {
-				format = timeFormat
-			}
-
-			var tp *time.Time
-			if isPtr {
-				tpp := (**time.Time)(ptr)
-				tp = *(tpp)
-			} else {
-				tp = (*time.Time)(ptr)
-			}
-
-			if tp != nil {
-				lt := tp.In(locale)
-				str := lt.Format(format)
-				if formatTag == "sql_date" && (str == "0000-01-01" || (isSnap && lt.Unix() <= 0)) {
-					str = "0000-00-00"
-				} else if formatTag == "sql_datetime" && (str == "0000-01-01 00:00:00" || (isSnap && lt.Unix() <= 0)) {
-					str = "0000-00-00 00:00:00"
-				}
-				stream.WriteString(str)
-			} else {
-				stream.Write([]byte("null"))
-			}
-		}}
-
-		binding.Decoder = &funcDecoder{fun: func(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
-			if typeErr != nil {
-				iter.Error = typeErr
-				return
-			}
-
-			var format string
-			if timeFormat == "" {
-				format = time.RFC3339
-			} else {
-				format = timeFormat
-			}
-
-			str := iter.ReadString()
-			var t *time.Time
-			if str != "" {
-				var err error
-				tmp, err := time.ParseInLocation(format, str, locale)
-				if err != nil {
-					if _, ok := err.(*time.ParseError); ok {
-						tmp = time.Date(0, 1, 1, 0, 0, 0, 0, locale)
-					} else {
-						iter.Error = err
-						return
-					}
-				}
-				t = &tmp
-			} else {
-				t = nil
-			}
-
-			if isPtr {
-				tpp := (**time.Time)(ptr)
-				*tpp = t
-			} else {
-				tp := (*time.Time)(ptr)
-				if tp != nil && t != nil {
-					*tp = *t
-				}
-			}
-		}}
+func ToJSON(v interface{}) []byte {
+	if bytes, err := json.Marshal(v); err != nil {
+		log.Warning(err)
+		return nil
+	} else {
+		return bytes
 	}
 }
 
-type funcDecoder struct {
-	fun jsoniter.DecoderFunc
-}
-
-func (decoder *funcDecoder) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
-	decoder.fun(ptr, iter)
-}
-
-type funcEncoder struct {
-	fun         jsoniter.EncoderFunc
-	isEmptyFunc func(ptr unsafe.Pointer) bool
-}
-
-func (encoder *funcEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	encoder.fun(ptr, stream)
-}
-
-func (encoder *funcEncoder) IsEmpty(ptr unsafe.Pointer) bool {
-	if encoder.isEmptyFunc == nil {
-		return false
+func ToJSONString(v interface{}) string {
+	if s, err := json.MarshalToString(v); err != nil {
+		log.Warning(err)
+		return ""
+	} else {
+		return s
 	}
-	return encoder.isEmptyFunc(ptr)
+}
+
+func ParseObjectB(bytes []byte) *JSONObject {
+	var o JSONObject
+	if err := json.Unmarshal(bytes, &o); err != nil {
+		log.Warning(err)
+		return nil
+	} else {
+		return &o
+	}
+}
+
+func ParseObject(s string) *JSONObject {
+	var o JSONObject
+	if err := json.UnmarshalFromString(s, &o); err != nil {
+		log.Warning(err)
+		return nil
+	} else {
+		return &o
+	}
+}
+
+func ParseArray(s string) *JSONArray {
+	var o JSONArray
+	if err := json.UnmarshalFromString(s, &o.arr); err != nil {
+		log.Warning(err)
+		return nil
+	} else {
+		o.size = len(o.arr)
+		return &o
+	}
 }
