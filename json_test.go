@@ -5,8 +5,6 @@ import (
 	"time"
 )
 
-var json = ConfigWithCustomTimeFormat
-
 type Book struct {
 	Id          int        `json:"id"`
 	PublishedAt *time.Time `json:"published_at" time_format:"sql_date" time_utc:"true"`

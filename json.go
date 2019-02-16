@@ -2,8 +2,8 @@ package fastjson
 
 import (
 	"github.com/json-iterator/go"
-	"time"
 	"strconv"
+	"time"
 	"unsafe"
 )
 
@@ -132,7 +132,7 @@ func (extension *CustomTimeExtension) UpdateStructDescriptor(structDescriptor *j
 				*tpp = t
 			} else {
 				tp := (*time.Time)(ptr)
-				if tp != nil && t != nil{
+				if tp != nil && t != nil {
 					*tp = *t
 				}
 			}
