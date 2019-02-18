@@ -1,7 +1,7 @@
 package fastjson
 
 import (
-    . "github.com/Danceiny/go.utils"
+    utils "github.com/Danceiny/go.utils"
     log "github.com/sirupsen/logrus"
     "reflect"
 )
@@ -63,9 +63,8 @@ func ParseArray(s string) *JSONArray {
     if err := json.UnmarshalFromString(s, &o.arr); err != nil {
         log.Warning(err)
         return nil
-    } else {
-        return postParseArray(&o, reflect.Invalid)
     }
+    return &o
 }
 
 func ParseArrayB(s []byte) *JSONArray {
@@ -74,10 +73,11 @@ func ParseArrayB(s []byte) *JSONArray {
         log.Warning(err)
         return nil
     }
-    return postParseArray(&o, reflect.Invalid)
+    return &o
 }
 
-func ParseArrayT(s string, t reflect.Kind) *JSONArray {
+// t, only support primitive types
+func ParseArrayT(s string, t reflect.Kind) interface{} {
     var o JSONArray
     if err := json.UnmarshalFromString(s, &o.arr); err != nil {
         log.Warning(err)
@@ -86,20 +86,17 @@ func ParseArrayT(s string, t reflect.Kind) *JSONArray {
     return postParseArray(&o, t)
 }
 
-func ParseArrayBT(s []byte, t reflect.Kind) *JSONArray {
+func ParseArrayBT(s []byte, t reflect.Kind) interface{} {
     var o JSONArray
     if err := json.Unmarshal(s, &o.arr); err != nil {
         log.Warning(err)
         return nil
-    } else {
-        return postParseArray(&o, t)
     }
+    return postParseArray(&o, t)
 }
 
-func postParseArray(o *JSONArray, t reflect.Kind) *JSONArray {
+func postParseArray(o *JSONArray, t reflect.Kind) interface{} {
     o.size = len(o.arr)
-    if t != reflect.Invalid {
-        TransferInterfaces(&o.arr, t)
-    }
-    return o
+    utils.CastPrimitiveSliceInplace(&o.arr, t)
+    return utils.CastPrimitiveSlice(o.arr, t)
 }

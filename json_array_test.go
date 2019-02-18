@@ -2,6 +2,7 @@ package fastjson
 
 import (
     "github.com/stretchr/testify/assert"
+    "os"
     "reflect"
     "testing"
 )
@@ -21,5 +22,38 @@ func TestParseArray(t *testing.T) {
 
 func TestParseArrayT(t *testing.T) {
     arr := ParseArrayT("[10,12]", reflect.Int)
-    assert.Equal(t, 10, arr.Get(0))
+    assert.Equal(t, 10, arr.([]int)[0])
+}
+
+func TestGetEnvOrDefault(t *testing.T) {
+    v := GetEnvOrDefault("KEY", JSONObject{"KEY": 10})
+    o := v.(JSONObject)
+    vv, ok := o.GetInt("KEY")
+    assert.Equal(t, true, ok)
+    assert.Equal(t, 10, vv)
+
+    _ = os.Setenv("KEY", "{\"KEY\": 10}")
+    v = GetEnvOrDefault("KEY", JSONObject{})
+    o = v.(JSONObject)
+    vv, ok = o.GetInt("KEY")
+    assert.Equal(t, true, ok)
+    assert.Equal(t, 10, vv)
+
+    _ = os.Setenv("KEY", "[{\"KEY\": 10}]")
+    v = GetEnvOrDefault("KEY", JSONArray{})
+    o2 := v.(JSONArray)
+    o2o := o2.GetJSONObject(0)
+    vv, ok = o2o.GetInt("KEY")
+    assert.Equal(t, true, ok)
+    assert.Equal(t, 10, vv)
+}
+
+func TestParseArrayT2Slice(t *testing.T) {
+    arr := ParseArrayT("[10,\"12\"]", reflect.Int).([]int)
+    assert.Equal(t, 2, len(arr))
+    assert.Equal(t, 10, arr[0])
+    arr2 := ParseArrayT("", reflect.Int)
+    assert.Equal(t, nil, arr2)
+    arr3 := ParseArrayT("{\"KEY\": 10}", reflect.Int)
+    assert.Equal(t, nil, arr3)
 }
