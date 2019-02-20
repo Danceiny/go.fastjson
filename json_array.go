@@ -5,7 +5,8 @@ const DEFAULT_CAPACITY = 16
 type JSONArray struct {
     arr  []interface{}
     size int
-    cur  int
+    cur  int // 从1开始
+    err  error
 }
 
 func NewJSONArray() *JSONArray {
@@ -18,35 +19,59 @@ func NewJSONArrayLimited(capacity int) *JSONArray {
     return &JSONArray{arr: arr}
 }
 
-func (jsonArray *JSONArray) Put(v interface{}) {
-    jsonArray.arr = append(jsonArray.arr, v)
-    jsonArray.size++
+func (ja *JSONArray) Put(v interface{}) {
+    ja.arr = append(ja.arr, v)
+    ja.size++
 }
 
-func (jsonArray *JSONArray) Get(index int) interface{} {
-    return (jsonArray.arr)[index]
+func (ja *JSONArray) Get(index int) interface{} {
+    return (ja.arr)[index]
 }
 
-func (jsonArray *JSONArray) GetJSONObject(index int) JSONObject {
-    return (jsonArray.arr)[index].(JSONObject)
+func (ja *JSONArray) GetJSONObject(index int) JSONObject {
+    return (ja.arr)[index].(JSONObject)
 }
 
-func (jsonArray *JSONArray) ToJSONString() string {
-    return ToJSONString(jsonArray.arr)
+func (ja *JSONArray) ToJSONString() string {
+    return ToJSONString(ja.arr)
 }
 
-func (jsonArray *JSONArray) ToJSON() []byte {
-    return ToJSON(jsonArray.arr)
+func (ja *JSONArray) ToJSON() []byte {
+    return ToJSON(ja.arr)
 }
 
-func (jsonArray *JSONArray) Size() int {
-    return jsonArray.size
+func (ja *JSONArray) Size() int {
+    return ja.size
 }
 
-func (jsonArray *JSONArray) cap() int {
-    return cap(jsonArray.arr)
+func (ja *JSONArray) cap() int {
+    return cap(ja.arr)
 }
 
-func (jsonArray *JSONArray) Next() {
+func (ja *JSONArray) Next() bool {
+    if ja.cur == ja.size {
+        return false
+    }
+    ja.cur++
+    return true
+}
 
+func (ja *JSONArray) Current() interface{} {
+    return ja.Get(ja.cur - 1)
+}
+
+func (ja *JSONArray) GetCurrentJSONObject() interface{} {
+    return ja.GetJSONObject(ja.cur - 1)
+}
+
+func (ja *JSONArray) Error() error {
+    return nil
+}
+
+func (ja *JSONArray) Prev() bool {
+    if ja.cur <= 1 {
+        return false
+    }
+    ja.cur--
+    return true
 }

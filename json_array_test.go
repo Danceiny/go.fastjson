@@ -57,3 +57,24 @@ func TestParseArrayT2Slice(t *testing.T) {
     arr3 := ParseArrayT("{\"KEY\": 10}", reflect.Int)
     assert.Equal(t, nil, arr3)
 }
+
+func TestJSONArray_Next(t *testing.T) {
+    ja := NewJSONArray()
+    ja.Put(10)
+    ja.Put(11)
+    assert.Equal(t, 2, ja.Size())
+    var cnt = 0
+    for ja.Next() {
+        ja.Current()
+        cnt++
+    }
+    assert.Equal(t, 2, cnt)
+
+    cnt = 0
+    for ja.Prev() {
+        ja.Current()
+        cnt++
+    }
+    assert.Equal(t, 1, cnt)
+    assert.Equal(t, 10, ja.Current().(int))
+}
