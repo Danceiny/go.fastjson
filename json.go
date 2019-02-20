@@ -47,11 +47,20 @@ func ParseObjectB(bytes []byte) *JSONObject {
     return &o
 }
 
+// o, &struct{}
 func ParseObjectBT(bytes []byte, o interface{}) {
     if err := json.Unmarshal(bytes, o); err != nil {
         log.Warning(err)
     }
 }
+
+// o, &struct{}
+func ParseObjectT(s string, o interface{}) {
+    if err := json.UnmarshalFromString(s, o); err != nil {
+        log.Warning(err)
+    }
+}
+
 
 func ParseObject(s string) *JSONObject {
     var o JSONObject
