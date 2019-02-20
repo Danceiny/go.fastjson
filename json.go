@@ -43,9 +43,8 @@ func ParseObjectB(bytes []byte) *JSONObject {
     if err := json.Unmarshal(bytes, &o); err != nil {
         log.Warning(err)
         return nil
-    } else {
-        return &o
     }
+    return &o
 }
 
 func ParseObject(s string) *JSONObject {
@@ -64,7 +63,7 @@ func ParseArray(s string) *JSONArray {
         log.Warning(err)
         return nil
     }
-    return &o
+    return postParseArray(&o)
 }
 
 func ParseArrayB(s []byte) *JSONArray {
@@ -73,7 +72,7 @@ func ParseArrayB(s []byte) *JSONArray {
         log.Warning(err)
         return nil
     }
-    return &o
+    return postParseArray(&o)
 }
 
 // t, only support primitive types
@@ -83,7 +82,7 @@ func ParseArrayT(s string, t reflect.Kind) interface{} {
         log.Warning(err)
         return nil
     }
-    return postParseArray(&o, t)
+    return postParseArrayT(&o, t)
 }
 
 func ParseArrayBT(s []byte, t reflect.Kind) interface{} {
@@ -92,11 +91,16 @@ func ParseArrayBT(s []byte, t reflect.Kind) interface{} {
         log.Warning(err)
         return nil
     }
-    return postParseArray(&o, t)
+    return postParseArrayT(&o, t)
 }
 
-func postParseArray(o *JSONArray, t reflect.Kind) interface{} {
+func postParseArrayT(o *JSONArray, t reflect.Kind) interface{} {
     o.size = len(o.arr)
     utils.CastPrimitiveSliceInplace(&o.arr, t)
     return utils.CastPrimitiveSlice(o.arr, t)
+}
+
+func postParseArray(o *JSONArray) *JSONArray {
+    o.size = len(o.arr)
+    return o
 }
