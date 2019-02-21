@@ -78,3 +78,15 @@ func TestJSONArray_Next(t *testing.T) {
     assert.Equal(t, 1, cnt)
     assert.Equal(t, 10, ja.Current().(int))
 }
+
+func TestJSONArray_Set(t *testing.T) {
+    ja := NewJSONArrayLimited(3)
+    ja.Put(10)
+    ja.Put(11)
+    ja.Set(1, 13)
+    assert.Equal(t, 13, ja.Get(1).(int))
+    ja.Set(2, 13)
+    assert.Equal(t, 13, ja.Get(2).(int))
+    ja.Set(26, 26)
+    assert.Equal(t, 26, ja.Get(26).(int))
+}

@@ -24,6 +24,23 @@ func (ja *JSONArray) Put(v interface{}) {
     ja.size++
 }
 
+func (ja *JSONArray) Set(index int, v interface{}) {
+    var capacity = ja.cap()
+    var size = ja.size
+    if index >= size && index < capacity {
+        ja.arr = append(ja.arr, v)
+        return
+    } else if index >= capacity {
+        var newArr = make([]interface{}, index+1, index*2)
+        copy(newArr, ja.arr)
+        ja.arr = newArr
+        ja.size = len(newArr)
+    } else if index < 0 {
+        index = size + index
+    }
+    ja.arr[index] = v
+}
+
 func (ja *JSONArray) Get(index int) interface{} {
     return (ja.arr)[index]
 }
@@ -74,4 +91,8 @@ func (ja *JSONArray) Prev() bool {
     }
     ja.cur--
     return true
+}
+
+func (ja *JSONArray) Values() []interface{} {
+    return ja.arr
 }
