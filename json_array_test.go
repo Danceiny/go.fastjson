@@ -1,6 +1,7 @@
 package fastjson
 
 import (
+    "fmt"
     "github.com/stretchr/testify/assert"
     "os"
     "reflect"
@@ -26,15 +27,15 @@ func TestParseArrayT(t *testing.T) {
 }
 
 func TestGetEnvOrDefault(t *testing.T) {
-    v := GetEnvOrDefault("KEY", JSONObject{"KEY": 10})
-    o := v.(JSONObject)
+    v := GetEnvOrDefault("KEY", &JSONObject{"KEY": 10})
+    o := v.(*JSONObject)
     vv, ok := o.GetInt("KEY")
     assert.Equal(t, true, ok)
     assert.Equal(t, 10, vv)
 
     _ = os.Setenv("KEY", "{\"KEY\": 10}")
-    v = GetEnvOrDefault("KEY", JSONObject{})
-    o = v.(JSONObject)
+    v = GetEnvOrDefault("KEY", &JSONObject{})
+    o = v.(*JSONObject)
     vv, ok = o.GetInt("KEY")
     assert.Equal(t, true, ok)
     assert.Equal(t, 10, vv)
@@ -43,6 +44,7 @@ func TestGetEnvOrDefault(t *testing.T) {
     v = GetEnvOrDefault("KEY", JSONArray{})
     o2 := v.(JSONArray)
     o2o := o2.GetJSONObject(0)
+    fmt.Println("o2o is nil???", o2o)
     vv, ok = o2o.GetInt("KEY")
     assert.Equal(t, true, ok)
     assert.Equal(t, 10, vv)

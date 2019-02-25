@@ -5,7 +5,7 @@ const DEFAULT_CAPACITY = 16
 type JSONArray struct {
     arr  []interface{}
     size int
-    cur  int // 从1开始
+    cur  int
     err  error
 }
 
@@ -45,16 +45,26 @@ func (ja *JSONArray) Get(index int) interface{} {
     return (ja.arr)[index]
 }
 
-func (ja *JSONArray) GetJSONObject(index int) JSONObject {
-    return (ja.arr)[index].(JSONObject)
+func (ja *JSONArray) GetJSONObject(index int) *JSONObject {
+    var ret = (ja.arr)[index]
+    switch ret.(type) {
+    case *JSONObject:
+        return ret.(*JSONObject)
+    case JSONObject:
+        var ja = ret.(JSONObject)
+        return &ja
+    case map[string]interface{}:
+        return NewJSONObjectFromMap(ret.(map[string]interface{}))
+    }
+    return nil
 }
 
-func (ja *JSONArray) ToJSONString() string {
-    return ToJSONString(ja.arr)
-}
-
-func (ja *JSONArray) ToJSON() []byte {
+func (ja *JSONArray) ToJSON() string {
     return ToJSON(ja.arr)
+}
+
+func (ja *JSONArray) ToJSONB() []byte {
+    return ToJSONB(ja.arr)
 }
 
 func (ja *JSONArray) Size() int {

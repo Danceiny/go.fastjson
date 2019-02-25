@@ -2,12 +2,25 @@ package fastjson
 
 import (
     "fmt"
+    utils "github.com/Danceiny/go.utils"
     "strconv"
 )
 
 type JSONObject map[string]interface{}
 
+func NewJSONObjectFromMap(src map[string]interface{}) *JSONObject {
+    var jo = JSONObject{}
+    for k, v := range src {
+        jo.Put(k, v)
+    }
+    return &jo
+}
+
 func (jsonObject *JSONObject) Put(k string, v interface{}) {
+    (*jsonObject)[k] = v
+}
+
+func (jsonObject *JSONObject) Sut(k string, v interface{}) {
     (*jsonObject)[k] = v
 }
 
@@ -15,6 +28,9 @@ func (jsonObject *JSONObject) Get(k string) interface{} {
     return (*jsonObject)[k]
 }
 
+func (jsonObject *JSONObject) GetBool(k string) bool {
+    return utils.Cast2Bool((*jsonObject)[k])
+}
 func (jsonObject *JSONObject) GetString(k string) (string, bool) {
     v := jsonObject.Get(k)
     if v == nil {
@@ -69,10 +85,10 @@ func (jsonObject *JSONObject) PutFluent(k string, v interface{}) *JSONObject {
     return jsonObject
 }
 
-func (jsonObject *JSONObject) ToJSONString() string {
-    return ToJSONString(jsonObject)
+func (jsonObject *JSONObject) ToJSON() string {
+    return ToJSON(jsonObject)
 }
 
-func (jsonObject *JSONObject) ToJSON() []byte {
-    return ToJSON(jsonObject)
+func (jsonObject *JSONObject) ToJSONB() []byte {
+    return ToJSONB(jsonObject)
 }

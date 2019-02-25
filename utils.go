@@ -77,12 +77,28 @@ func GetEnvOrDefault(k string, dv interface{}) interface{} {
                 return *ret
             }
             break
+        case *JSONObject:
+            ret := ParseObject(v)
+            if ret == nil {
+                err = errors.New("parse to json failed")
+            } else {
+                return ret
+            }
+            break
         case JSONArray:
             ret := ParseArray(v)
             if ret == nil {
                 err = errors.New("parse to json failed")
             } else {
                 return *ret
+            }
+            break
+        case *JSONArray:
+            ret := ParseArray(v)
+            if ret == nil {
+                err = errors.New("parse to json failed")
+            } else {
+                return ret
             }
             break
         default:

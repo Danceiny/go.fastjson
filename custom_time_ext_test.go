@@ -54,12 +54,10 @@ func TestLocale(t *testing.T) {
         UpdatedAt: nil,
         CreatedAt: time.Date(0, 1, 1, 0, 0, 0, 0, time.Local),
     }
-
     bytes, err := json.Marshal(user)
     if err != nil {
         t.Error(err.Error())
     }
-
     if string(bytes) != `{"id":0,"updated_at":null,"created_at":"0000-00-00 00:00:00"}` {
         t.Errorf("got: %s", bytes)
     }
